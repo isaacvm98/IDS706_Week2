@@ -1,0 +1,8 @@
+yfinance
+polars
+matplotlib
+scikit-learn
+seaborn
+numpy
+ipykernel
+pyarrow
