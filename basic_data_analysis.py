@@ -84,20 +84,18 @@ plt.xticks(rotation=90, ha='right',ticks=np.arange(len(corr_matrix.columns))+0.5
 plt.yticks(rotation=0, ticks=np.arange(len(corr_matrix.columns))+0.5, labels=corr_matrix.columns)
 plt.tight_layout()
 plt.savefig('visualizations/stock_correlation.png', dpi=300, bbox_inches='tight')
-plt.show()
 
 inertias = []
 for k in range(2, 8):
     kmeans = KMeans(n_clusters=k, random_state=42)
     kmeans.fit(corr_matrix)
     inertias.append(kmeans.inertia_)
-
+plt.figure(figsize=(12, 10))
 plt.plot(range(2, 8), inertias, 'bo-')
 plt.xlabel('Number of Clusters (k)')
 plt.ylabel('Inertia (WCSS)')
 plt.title('Elbow Method for Optimal k')
 plt.savefig('visualizations/elbow.png', dpi=300, bbox_inches='tight')
-plt.show()
 
 # From the elbow plot, we choose k=4
 kmeans = KMeans(n_clusters=4, random_state=42)
@@ -128,13 +126,13 @@ df_returns = df.select([
     (pl.col('BIMBOA.MX').pct_change()).alias('BIMBOA_returns')
 ]).drop_nulls()
 
+plt.figure(figsize=(12, 10))
 sns.lineplot(data=df_returns, x='Date', y='BIMBOA_returns', label='BIMBOA_returns')
 sns.lineplot(data=df_returns, x='Date', y='WALMEX_returns', label='WALMEX_returns')
 plt.title('Stock Returns Over Time for Cluster 2')
 plt.xlabel('Date')
 plt.ylabel('Returns')
 plt.savefig('visualizations/stock_returns.png', dpi=300, bbox_inches='tight')
-plt.show()
 
 # Create train/test split (last 30 days for testing)
 n_test = 30
