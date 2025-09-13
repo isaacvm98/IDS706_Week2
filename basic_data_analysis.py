@@ -1,6 +1,5 @@
 import yfinance as yf
 import polars as pl
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -8,156 +7,229 @@ import polars.selectors as cs
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
+import os
 
-## Selected stocks with their respective sectors
+# Create visualizations directory if it doesn't exist  
+os.makedirs('visualizations', exist_ok=True)
 
-mexican_stocks =  [
-            # Financial Sector (Peso GFNORTE, BBVA, Santander, Inbursa)
-            'GFNORTEO.MX',    # Grupo Financiero Banorte - Leading Mexican bank
-            'GFINBURO.MX',    # Grupo Financiero Inbursa - Carlos Slim's bank
-            
-            # Retail & Consumer Staples
-            'WALMEX.MX',      # Wal-Mart de México - Largest retailer
-            'BIMBOA.MX',      # Grupo Bimbo - Global bakery leader
-            'FEMSAUBD.MX',     # Fomento Económico Mexicano - FEMSA conglomerate
-            'KOFUBL.MX',      # Coca-Cola FEMSA - Largest Coke bottler in LatAm
-            'AC.MX',          # Arca Continental - Coca-Cola bottler
-            'LIVEPOL1.MX',    # Liverpool - Premium department stores
-            
-            # Telecommunications & Media
-            'TLEVISACPO.MX',  # Grupo Televisa - Media conglomerate
-            
-            # Materials & Mining (Commodity Exposure)
-            'CEMEXCPO.MX',    # Cemex - Global cement giant
-            'GMEXICOB.MX',    # Grupo México - Mining and transportation
-            'PE&OLES.MX',     # Industrias Peñoles - Precious metals
-            'ALPEKA.MX',      # Alfa - Industrial conglomerate
-            
-            # Transportation & Infrastructure
-            'GAPB.MX',        # Grupo Aeroportuario del Pacífico - Airport operator
-            'OMAB.MX',        # Grupo Aeroportuario del Centro Norte - Airports
-            'ASURB.MX',       # Grupo Aeroportuario del Sureste - Airport group
-            
-            # Real Estate Investment Trusts (FIBRAs)
-            'FIBRAMQ12.MX',    # Fibra Mty - Industrial real estate
-            
-            # Healthcare & Consumer Discretionary
-            'LABB.MX',        # Genomma Lab Internacional - Pharma & personal care
-            'GCARSOA1.MX',     # Grupo Carso - Retail and industrial conglomerate
-            
-            # Additional Diversification
-            'GRUMAB.MX',      # Grupo Financiero Multiva
-        ]
+def get_mexican_stock_symbols():
+    """Return list of Mexican stock symbols for analysis."""
+    return [
+        'GFNORTEO.MX', 'GFINBURO.MX', 'WALMEX.MX', 'BIMBOA.MX', 
+        'FEMSAUBD.MX', 'KOFUBL.MX', 'AC.MX', 'LIVEPOL1.MX',
+        'TLEVISACPO.MX', 'CEMEXCPO.MX', 'GMEXICOB.MX', 'PE&OLES.MX',
+        'ALPEKA.MX', 'GAPB.MX', 'OMAB.MX', 'ASURB.MX',
+        'FIBRAMQ12.MX', 'LABB.MX', 'GCARSOA1.MX', 'GRUMAB.MX'
+    ]
 
+def download_stock_data(symbols, start_date="2020-01-01", end_date="2025-09-05"):
+    """Download stock data for given symbols and date range."""
+    if not symbols:
+        raise ValueError("Symbols list cannot be empty")
+    
+    raw_data = yf.download(symbols, start_date, end_date)
+    if raw_data.empty:
+        raise ValueError("No data downloaded for given symbols and date range")
+    
+    return raw_data
 
-raw_data = yf.download(mexican_stocks, "2020-01-01", "2025-09-05")
-df = pl.from_pandas(raw_data,include_index=True)
+def extract_close_prices(raw_data):
+    """Extract close prices from raw yfinance data and return as Polars DataFrame."""
+    df = pl.from_pandas(raw_data, include_index=True)
+    
+    # Only keep the 'Close' prices
+    df = df.select(
+        pl.col('Date'),
+        cs.starts_with("('Close'").name.map(lambda col_name: col_name.split("', '")[1].rstrip("')"))
+    )
+    
+    return df
 
-print(df.head())
-print(df.columns)
-print(df.describe())
+def calculate_correlation_matrix(df):
+    """Calculate correlation matrix from price DataFrame."""
+    if df.shape[1] < 2:
+        raise ValueError("DataFrame must have at least 2 columns for correlation")
+    
+    # Remove Date column for correlation calculation
+    price_columns = [col for col in df.columns if col != 'Date']
+    corr_matrix = df.select(price_columns).corr()
+    
+    return corr_matrix
 
-# Basic Filtering and Grouping
-## Only keep the 'Close' prices
-df  = df.select(
-    pl.col('Date'),
-    cs.starts_with("('Close'").name.map(lambda col_name: col_name.split("', '")[1].rstrip("')"))
-)
+def find_optimal_clusters(corr_matrix, max_k=8):
+    """Find optimal number of clusters using elbow method."""
+    inertias = []
+    k_range = range(2, max_k)
+    
+    for k in k_range:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(corr_matrix)
+        inertias.append(kmeans.inertia_)
+    
+    return list(k_range), inertias
 
-print('Verifying Close Prices DataFrame:')
-print(df.head())
-print(df.columns)
-print(df.describe())
-
-
-corr_matrix = df.select(df.columns[1:]).corr()
-mask = np.triu(np.ones_like(corr_matrix), k=1)
-
-plt.figure(figsize=(12, 10))
-sns.heatmap(corr_matrix, 
-            mask=mask, 
-            annot=True, 
-            fmt=".2f", 
-            cmap="coolwarm",
-            square=True)
-plt.xticks(rotation=90, ha='right',ticks=np.arange(len(corr_matrix.columns))+0.5, labels=corr_matrix.columns)
-plt.yticks(rotation=0, ticks=np.arange(len(corr_matrix.columns))+0.5, labels=corr_matrix.columns)
-plt.tight_layout()
-plt.savefig('visualizations/stock_correlation.png', dpi=300, bbox_inches='tight')
-
-inertias = []
-for k in range(2, 8):
-    kmeans = KMeans(n_clusters=k, random_state=42)
+def perform_kmeans_clustering(corr_matrix, n_clusters=4, random_state=42):
+    """Perform K-means clustering on correlation matrix."""
+    if n_clusters < 1:
+        raise ValueError("Number of clusters must be positive")
+    if n_clusters > corr_matrix.shape[0]:
+        raise ValueError("Number of clusters cannot exceed number of stocks")
+    
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
     kmeans.fit(corr_matrix)
-    inertias.append(kmeans.inertia_)
-plt.figure(figsize=(12, 10))
-plt.plot(range(2, 8), inertias, 'bo-')
-plt.xlabel('Number of Clusters (k)')
-plt.ylabel('Inertia (WCSS)')
-plt.title('Elbow Method for Optimal k')
-plt.savefig('visualizations/elbow.png', dpi=300, bbox_inches='tight')
+    
+    # Create cluster groups
+    cluster_groups = {}
+    for stock, cluster in zip(corr_matrix.columns, kmeans.labels_):
+        if cluster not in cluster_groups:
+            cluster_groups[cluster] = []
+        cluster_groups[cluster].append(stock)
+    
+    return kmeans, cluster_groups
 
-# From the elbow plot, we choose k=4
-kmeans = KMeans(n_clusters=4, random_state=42)
-kmeans.fit(corr_matrix)
+def calculate_returns(df, stock1_col, stock2_col):
+    """Calculate returns for two stocks."""
+    df_returns = df.select([
+        pl.col('Date'),
+        (pl.col(stock1_col).pct_change()).alias(f'{stock1_col}_returns'),
+        (pl.col(stock2_col).pct_change()).alias(f'{stock2_col}_returns')
+    ]).drop_nulls()
+    
+    return df_returns
 
-cluster_groups = {}
-for stock, cluster in zip(corr_matrix.columns, kmeans.labels_):
-    if cluster not in cluster_groups:
-        cluster_groups[cluster] = []
-    cluster_groups[cluster].append(stock)
+def build_linear_model(df_returns, predictor_col, target_col, test_size=30):
+    """Build linear regression model to predict one stock from another."""
+    if len(df_returns) <= test_size:
+        raise ValueError("Not enough data for train/test split")
+    
+    # Create train/test split
+    n_train = len(df_returns) - test_size
+    
+    X_train = df_returns[predictor_col][:n_train].to_numpy().reshape(-1, 1)
+    y_train = df_returns[target_col][:n_train].to_numpy()
+    
+    X_test = df_returns[predictor_col][n_train:].to_numpy().reshape(-1, 1)
+    y_test = df_returns[target_col][n_train:].to_numpy()
+    
+    # Fit model
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    
+    # Predictions and metrics
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    return {
+        'model': model,
+        'mse': mse,
+        'r2': r2,
+        'coefficient': model.coef_[0],
+        'intercept': model.intercept_,
+        'X_test': X_test,
+        'y_test': y_test,
+        'y_pred': y_pred
+    }
 
-# Create a more readable format
-print("Mexican Stock Correlation Clusters")
-print("=" * 50)
-for cluster_id in sorted(cluster_groups.keys()):
-    print(f"\nCluster {cluster_id} ({len(cluster_groups[cluster_id])} stocks):")
-    print("-" * 30)
-    for stock in sorted(cluster_groups[cluster_id]):
-        print(f"  • {stock}")
+def create_correlation_heatmap(corr_matrix, save_path=None):
+    """Create and optionally save correlation heatmap."""
+    mask = np.triu(np.ones_like(corr_matrix), k=1)
+    
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(corr_matrix, 
+                mask=mask, 
+                annot=True, 
+                fmt=".2f", 
+                cmap="coolwarm",
+                square=True)
+    plt.xticks(rotation=90, ha='right', ticks=np.arange(len(corr_matrix.columns))+0.5, labels=corr_matrix.columns)
+    plt.yticks(rotation=0, ticks=np.arange(len(corr_matrix.columns))+0.5, labels=corr_matrix.columns)
+    plt.title('Mexican Stocks Correlation Matrix')
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    plt.show()
 
+def create_elbow_plot(k_range, inertias, save_path=None):
+    """Create and optionally save elbow plot."""
+    plt.figure(figsize=(10, 6))
+    plt.plot(k_range, inertias, 'bo-')
+    plt.xlabel('Number of Clusters (k)')
+    plt.ylabel('Inertia (WCSS)')
+    plt.title('Elbow Method for Optimal k')
+    plt.grid(True, alpha=0.3)
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    plt.show()
 
-## Forecasting Cluster 2 (Consumer Staples - 2 stocks): BIMBOA.MX (Grupo Bimbo - food) + WALMEX.MX (Walmart México - retail)
+def create_returns_plot(df_returns, stock1_col, stock2_col, save_path=None):
+    """Create and optionally save returns time series plot."""
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(data=df_returns, x='Date', y=f'{stock1_col}_returns', label=f'{stock1_col}')
+    sns.lineplot(data=df_returns, x='Date', y=f'{stock2_col}_returns', label=f'{stock2_col}')
+    plt.title(f'Stock Returns Over Time: {stock1_col} vs {stock2_col}')
+    plt.xlabel('Date')
+    plt.ylabel('Daily Returns')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    plt.show()
 
-#It is usually better to model returns than prices
-df_returns = df.select([
-    pl.col('Date'),
-    (pl.col('WALMEX.MX').pct_change()).alias('WALMEX_returns'),
-    (pl.col('BIMBOA.MX').pct_change()).alias('BIMBOA_returns')
-]).drop_nulls()
+def print_cluster_results(cluster_groups):
+    """Print clustering results in a formatted way."""
+    print("Mexican Stock Correlation Clusters")
+    print("=" * 50)
+    for cluster_id in sorted(cluster_groups.keys()):
+        print(f"\nCluster {cluster_id} ({len(cluster_groups[cluster_id])} stocks):")
+        print("-" * 30)
+        for stock in sorted(cluster_groups[cluster_id]):
+            print(f"  • {stock}")
 
-plt.figure(figsize=(12, 10))
-sns.lineplot(data=df_returns, x='Date', y='BIMBOA_returns', label='BIMBOA_returns')
-sns.lineplot(data=df_returns, x='Date', y='WALMEX_returns', label='WALMEX_returns')
-plt.title('Stock Returns Over Time for Cluster 2')
-plt.xlabel('Date')
-plt.ylabel('Returns')
-plt.savefig('visualizations/stock_returns.png', dpi=300, bbox_inches='tight')
+def print_model_results(model_results, predictor_name, target_name):
+    """Print linear model results in a formatted way."""
+    print(f"Predicting {target_name} using {predictor_name}:")
+    print(f"MSE: {model_results['mse']:.6f}")
+    print(f"R²: {model_results['r2']:.3f}")
+    print(f"Equation: {target_name} = {model_results['coefficient']:.3f} * {predictor_name} + {model_results['intercept']:.3f}")
 
-# Create train/test split (last 30 days for testing)
-n_test = 30
-n_train = len(df) - n_test
+def main():
+    """Main analysis pipeline."""
+    # Get data
+    mexican_stocks = get_mexican_stock_symbols()
+    raw_data = download_stock_data(mexican_stocks)
+    df = extract_close_prices(raw_data)
+    
+    print("Basic Data Info:")
+    print(df.head())
+    print(f"Columns: {df.columns}")
+    print(f"Shape: {df.shape}")
+    
+    # Correlation analysis
+    corr_matrix = calculate_correlation_matrix(df)
+    create_correlation_heatmap(corr_matrix, 'visualizations/stock_correlation.png')
+    
+    # Clustering
+    k_range, inertias = find_optimal_clusters(corr_matrix)
+    create_elbow_plot(k_range, inertias, 'visualizations/elbow.png')
+    
+    kmeans, cluster_groups = perform_kmeans_clustering(corr_matrix)
+    print_cluster_results(cluster_groups)
+    
+    # Time series modeling (Cluster 2: Consumer Staples)
+    df_returns = calculate_returns(df, 'WALMEX.MX', 'BIMBOA.MX')
+    create_returns_plot(df_returns, 'WALMEX.MX', 'BIMBOA.MX', 'visualizations/stock_returns.png')
+    
+    model_results = build_linear_model(df_returns, 'WALMEX.MX_returns', 'BIMBOA.MX_returns')
+    print_model_results(model_results, 'WALMEX', 'BIMBOA')
 
-# Extract data using Polars syntax
-X_train = df_returns['WALMEX_returns'][:n_train].to_numpy().reshape(-1, 1)
-y_train = df_returns['BIMBOA_returns'][:n_train].to_numpy()
-
-X_test = df_returns['WALMEX_returns'][n_train:].to_numpy().reshape(-1, 1)
-y_test = df_returns['BIMBOA_returns'][n_train:].to_numpy()
-
-# Fit model
-stock_model = LinearRegression()
-stock_model.fit(X_train, y_train)
-
-# Predictions
-y_pred = stock_model.predict(X_test)
-
-# Metrics
-mse = mean_squared_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
-
-print(f"Predicting BIMBOA using WALMEX:")
-print(f"MSE: {mse:.2f}")
-print(f"R²: {r2:.2f}")
-print(f"Equation: BIMBOA = {stock_model.coef_[0]:.3f} * WALMEX + {stock_model.intercept_:.3f}")
-
+if __name__ == "__main__":
+    main()
