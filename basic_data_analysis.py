@@ -26,8 +26,8 @@ def download_stock_data(symbols, start_date="2020-01-01", end_date="2025-09-05")
     """Download stock data for given symbols and date range."""
     if not symbols:
         raise ValueError("Symbols list cannot be empty")
-    
-    raw_data = yf.download(symbols, start_date, end_date)
+
+    raw_data = yf.download(symbols, start_date, end_date, auto_adjust=False)
     if raw_data.empty:
         raise ValueError("No data downloaded for given symbols and date range")
     
