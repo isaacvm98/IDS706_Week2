@@ -76,6 +76,27 @@ Applied linear regression to predict BIMBOA returns using WALMEX returns (Cluste
 - Built linear regression model predicting BIMBOA returns from WALMEX returns
 - Achieved reasonable performance for daily stock return prediction (R² = 0.16)
 
+## Visualizations
+
+The project generates three key visualizations:
+
+### 1. Correlation Heatmap
+Shows correlation coefficients between all stock pairs:
+
+![Correlation Heatmap](visualizations/correlation_heatmap.png)
+
+### 2. Elbow Plot  
+Demonstrates optimal cluster selection (k=4):
+
+![Elbow Plot](visualizations/elbow_plot.png)
+
+### 3. Time Series Plot
+Displays daily returns for Cluster 2 stocks over time:
+
+![Returns Over Time - Cluster 2](visualizations/return_over_time_cluster_2.png)
+
+*Daily returns comparison between BIMBOA.MX (Grupo Bimbo) and WALMEX.MX (Walmart México)*
+
 ## Business Insights
 
 ### Clustering Insights
@@ -118,7 +139,9 @@ This project uses **VS Code Dev Containers** for consistent development environm
 - Docker Desktop
 - VS Code with Dev Containers extension
 
-### Setup
+### Setup Options
+
+#### Option 1: VS Code Dev Container (Recommended for Development)
 ```bash
 # Clone the repository
 git clone <your-repo-url>
@@ -131,13 +154,46 @@ code .
 # "Dev Containers: Reopen in Container"
 ```
 
+#### Option 2: Direct Docker
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd mexican-stock-analysis
+
+# Build and run with Docker
+make docker-build
+make docker-run
+
+# Or using docker directly
+docker build -t mexican-stock-analysis .
+docker run --rm -v $(pwd):/app mexican-stock-analysis
+```
+
+#### Option 3: Docker Compose
+```bash
+# Run analysis
+docker-compose up mexican-stock-analysis
+
+# Start Jupyter Lab (accessible at http://localhost:8888)
+docker-compose up jupyter
+
+# Development mode (interactive shell)
+docker-compose up -d dev
+docker-compose exec dev bash
+```
+
 ### Running the Analysis
 ```bash
 # Install dependencies
 make install
 
 # Run the complete analysis
+make run
+# or
 python basic_data_analysis.py
+
+# Start Jupyter Lab
+make notebook
 
 # Optional: Format and lint code
 make format
