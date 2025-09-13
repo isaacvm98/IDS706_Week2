@@ -83,17 +83,17 @@ The project generates three key visualizations:
 ### 1. Correlation Heatmap
 Shows correlation coefficients between all stock pairs:
 
-![Correlation Heatmap](visualizations/correlation_heatmap.png)
+![Correlation Heatmap](visualizations/stock_correlation.png)
 
 ### 2. Elbow Plot  
 Demonstrates optimal cluster selection (k=4):
 
-![Elbow Plot](visualizations/elbow_plot.png)
+![Elbow Plot](visualizations/elbow.png)
 
 ### 3. Time Series Plot
 Displays daily returns for Cluster 2 stocks over time:
 
-![Returns Over Time - Cluster 2](visualizations/return_over_time_cluster_2.png)
+![Returns Over Time - Cluster 2](visualizations/stock_returns.png)
 
 *Daily returns comparison between BIMBOA.MX (Grupo Bimbo) and WALMEX.MX (Walmart México)*
 
