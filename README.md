@@ -54,6 +54,37 @@ Applied linear regression to predict BIMBOA returns using WALMEX returns (Cluste
 3. **Modeling**: Linear regression on daily returns (not prices) for stationarity
 4. **Validation**: Train/test split with last 30 days as test set
 
+### Testing Infrastructure
+
+This project includes a robust testing framework to ensure code reliability:
+
+#### Test Coverage
+- **Current Coverage**: 47% (64/136 statements tested)
+- **Test Categories**: Data processing, correlation analysis, clustering, time series modeling
+- **Framework**: pytest with coverage reporting
+
+#### Test Structure
+```
+test_stock_analysis.py
+├── TestDataProcessing          # Stock data download and preprocessing
+├── TestCorrelationMatrix       # Correlation calculation validation  
+├── TestClustering             # K-means clustering functionality
+└── TestTimeSeriesModeling     # Returns calculation and regression
+```
+
+#### Running Tests
+```bash
+# Run all tests with coverage
+make test
+
+# Run tests in Docker
+docker-compose up test
+
+# Generate detailed HTML coverage report
+pytest --cov=basic_data_analysis --cov-report=html test_stock_analysis.py
+# Then open htmlcov/index.html
+```
+
 ## Methodology
 
 ### 1. Data Preprocessing
