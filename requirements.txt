@@ -5,4 +5,6 @@ scikit-learn
 seaborn
 numpy
 ipykernel
-pyarrow
+black
+pytest
+pytest-cov
