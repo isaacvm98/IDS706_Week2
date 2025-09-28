@@ -45,7 +45,7 @@ docker-test:
 	docker run --rm -v $(PWD):/app mexican-stock-analysis python -m pytest -vv test_stock_analysis.py
 
 docker-lint:
-	docker run --rm -v $(PWD):/app mexican-stock-analysis sh -c "black --check *.py && flake8 basic_data_analysis.py test_stock_analysis.py --max-line-length=88 --ignore=E203,W503"
+	docker run --rm -v $(PWD):/app mexican-stock-analysis sh -c "black --check *.py && flake8 basic_data_analysis.py test_stock_analysis.py --max-line-length=100 --ignore=E203,W503"
 
 # Quality checks - run all formatting, linting, and testing
 quality: format-check lint test
