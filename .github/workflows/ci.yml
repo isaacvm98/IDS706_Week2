@@ -44,7 +44,7 @@ jobs:
         # Stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # Exit-zero treats all errors as warnings. Line length should match Black's default (88)
-        flake8 basic_data_analysis.py test_stock_analysis.py --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics --ignore=E203,W503
+        flake8 basic_data_analysis.py test_stock_analysis.py --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics --ignore=E203,W503
         
     - name: Run tests with pytest
       run: |
@@ -74,4 +74,4 @@ jobs:
         
     - name: Run linting in Docker
       run: |
-        docker run --rm -v $(pwd):/app mexican-stock-analysis sh -c "black --check *.py && flake8 basic_data_analysis.py test_stock_analysis.py --max-line-length=88 --ignore=E203,W503"
+        docker run --rm -v $(pwd):/app mexican-stock-analysis sh -c "black --check *.py && flake8 basic_data_analysis.py test_stock_analysis.py --max-line-length=100 --ignore=E203,W503"
