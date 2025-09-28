@@ -169,7 +169,8 @@ def create_correlation_heatmap(corr_matrix, save_path=None):
 
     plt.figure(figsize=(12, 10))
     sns.heatmap(
-        corr_matrix, mask=mask, annot=True, fmt=".2f", cmap="coolwarm", square=True
+        corr_matrix, mask=mask, annot=True, fmt=".2f", cmap="coolwarm", 
+        square=True
     )
     plt.xticks(
         rotation=90,
@@ -210,9 +211,12 @@ def create_returns_plot(df_returns, stock1_col, stock2_col, save_path=None):
     """Create and optionally save returns time series plot."""
     plt.figure(figsize=(12, 6))
     sns.lineplot(
-        data=df_returns, x="Date", y=f"{stock1_col}_returns", label=f"{stock1_col}")
+        data=df_returns, x="Date", y=f"{stock1_col}_returns", 
+        label=f"{stock1_col}"
+    )
     sns.lineplot(
-        data=df_returns, x="Date", y=f"{stock2_col}_returns", label=f"{stock2_col}")
+        data=df_returns, x="Date", y=f"{stock2_col}_returns", 
+        label=f"{stock2_col}")
     plt.title(f"Stock Returns Over Time: {stock1_col} vs {stock2_col}")
     plt.xlabel("Date")
     plt.ylabel("Daily Returns")
@@ -232,8 +236,6 @@ def print_cluster_results(cluster_groups):
     print("Mexican Stock Correlation Clusters")
     print("=" * 50)
     for cluster_id in sorted(cluster_groups.keys()):
-        print(f"\nCluster {cluster_id} ({len(cluster_groups[cluster_id])} stocks):")
-        print("-" * 30)
         for stock in sorted(cluster_groups[cluster_id]):
             print(f"  • {stock}")
 
@@ -244,8 +246,8 @@ def print_model_results(model_results, predictor_name, target_name):
     print(f"MSE: {model_results['mse']:.6f}")
     print(f"R²: {model_results['r2']:.3f}")
     print(
-        f"""Equation: {target_name} = {model_results['coefficient']:.3f} * 
-            {predictor_name} + {model_results['intercept']:.3f}"""
+        f"Equation: {target_name} = {model_results['coefficient']:.3f} * "
+        f"{predictor_name} + {model_results['intercept']:.3f}"
     )
 
 
