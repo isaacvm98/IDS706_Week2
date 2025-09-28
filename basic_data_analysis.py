@@ -169,8 +169,7 @@ def create_correlation_heatmap(corr_matrix, save_path=None):
 
     plt.figure(figsize=(12, 10))
     sns.heatmap(
-        corr_matrix, mask=mask, annot=True, fmt=".2f", cmap="coolwarm", 
-        square=True
+        corr_matrix, mask=mask, annot=True, fmt=".2f", cmap="coolwarm", square=True
     )
     plt.xticks(
         rotation=90,
@@ -211,12 +210,11 @@ def create_returns_plot(df_returns, stock1_col, stock2_col, save_path=None):
     """Create and optionally save returns time series plot."""
     plt.figure(figsize=(12, 6))
     sns.lineplot(
-        data=df_returns, x="Date", y=f"{stock1_col}_returns", 
-        label=f"{stock1_col}"
+        data=df_returns, x="Date", y=f"{stock1_col}_returns", label=f"{stock1_col}"
     )
     sns.lineplot(
-        data=df_returns, x="Date", y=f"{stock2_col}_returns", 
-        label=f"{stock2_col}")
+        data=df_returns, x="Date", y=f"{stock2_col}_returns", label=f"{stock2_col}"
+    )
     plt.title(f"Stock Returns Over Time: {stock1_col} vs {stock2_col}")
     plt.xlabel("Date")
     plt.ylabel("Daily Returns")
@@ -288,4 +286,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
