@@ -3,10 +3,10 @@
 import os
 import yfinance as yf
 import polars as pl
+import polars.selectors as cs
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import polars.selectors as cs
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
