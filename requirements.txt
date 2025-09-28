@@ -8,3 +8,4 @@ ipykernel
 black
 pytest
 pytest-cov
+pyarrow
