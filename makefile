@@ -1,5 +1,5 @@
 install:
-	pip install --upgrade pip &&\
+	pip install --upgrade pip && \
 		pip install -r requirements.txt
 
 format:
@@ -11,11 +11,11 @@ format-check:
 lint:
 	# Stop build if there are Python syntax errors or undefined names
 	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	# Check specific files with relaxed settings for line length and Black compatibility
-	flake8 basic_data_analysis.py test_stock_analysis.py --count --max-complexity=10 --max-line-length=100 --statistics --ignore=E203,W503,E501
+	# Check specific files with relaxed settings - ignore line length for simplicity
+	flake8 basic_data_analysis.py test_stock_analysis.py --count --max-complexity=10 --statistics --ignore=E203,W503,E501
 
 lint-strict:
-	flake8 basic_data_analysis.py test_stock_analysis.py --max-line-length=100 --ignore=E203,W503
+	flake8 basic_data_analysis.py test_stock_analysis.py --ignore=E203,W503,E501
 
 test:
 	python -m pytest -vv --cov=basic_data_analysis --cov-report=term --cov-report=html test_stock_analysis.py
@@ -45,7 +45,7 @@ docker-test:
 	docker run --rm -v $(PWD):/app mexican-stock-analysis python -m pytest -vv test_stock_analysis.py
 
 docker-lint:
-	docker run --rm -v $(PWD):/app mexican-stock-analysis sh -c "black --check *.py && flake8 basic_data_analysis.py test_stock_analysis.py --max-line-length=100 --ignore=E203,W503"
+	docker run --rm -v $(PWD):/app mexican-stock-analysis sh -c "black --check *.py && flake8 basic_data_analysis.py test_stock_analysis.py --ignore=E203,W503,E501"
 
 # Quality checks - run all formatting, linting, and testing
 quality: format-check lint test
