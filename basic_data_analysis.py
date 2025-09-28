@@ -16,7 +16,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 os.makedirs("visualizations", exist_ok=True)
 
 
-def get_mexican_stock_symbols():
+def get_stock_symbols():
     """Return list of Mexican stock symbols for analysis."""
     return [
         "GFNORTEO.MX",
@@ -252,7 +252,7 @@ def print_model_results(model_results, predictor_name, target_name):
 def main():
     """Main analysis pipeline."""
     # Get data
-    mexican_stocks = get_mexican_stock_symbols()
+    mexican_stocks = get_stock_symbols()
     raw_data = download_stock_data(mexican_stocks)
     df = extract_close_prices(raw_data)
 

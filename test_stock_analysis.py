@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from basic_data_analysis import (
-    get_mexican_stock_symbols,
+    get_stock_symbols,
     extract_close_prices,
     download_stock_data,
     calculate_correlation_matrix,
@@ -27,7 +27,7 @@ class TestDataProcessing(unittest.TestCase):
 
     def test_get_mexican_stock_symbols_returns_list(self):
         """Test that stock symbols function returns a list."""
-        symbols = get_mexican_stock_symbols()
+        symbols = get_stock_symbols()
         self.assertIsInstance(symbols, list)
         self.assertGreater(len(symbols), 0)
         self.assertTrue(all(symbol.endswith(".MX") for symbol in symbols))

@@ -3,7 +3,6 @@
 A data science project analyzing correlation patterns among 20 major Mexican stocks using K-means clustering and linear regression forecasting.
 
 [![CI](https://github.com/isaacvm98/IDS706_Week2/workflows/CI/badge.svg)](https://github.com/isaacvm98/IDS706_Week2/actions)
-[![codecov](https://codecov.io/gh/isaacvm98/IDS706_Week2/branch/main/graph/badge.svg)](https://codecov.io/gh/isaacvm98/IDS706_Week2)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## Project Overview
@@ -50,7 +49,8 @@ Applied linear regression to predict BIMBOA returns using WALMEX returns (Cluste
 **Interpretation**: For every 1% move in WALMEX, BIMBOA moves approximately 0.27% on average, indicating BIMBOA is less sensitive to systematic market movements despite being more volatile individually.
 
 ## CI/CD Pipeline
-
+![Successful workflow run in a GitHub Actions environment.](image.png)
+![Refactor name using F2](image-1.png)
 This project uses **GitHub Actions** for continuous integration with the following features:
 
 ### Automated Checks
