@@ -2,6 +2,10 @@
 
 A data science project analyzing correlation patterns among 20 major Mexican stocks using K-means clustering and linear regression forecasting.
 
+[![CI](https://github.com/isaacvm98/IDS706_Week2/workflows/CI/badge.svg)](https://github.com/isaacvm98/IDS706_Week2/actions)
+[![codecov](https://codecov.io/gh/isaacvm98/IDS706_Week2/branch/main/graph/badge.svg)](https://codecov.io/gh/isaacvm98/IDS706_Week2)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 ## Project Overview
 
 This project demonstrates fundamental data science techniques applied to financial market data, including:
@@ -45,6 +49,41 @@ Applied linear regression to predict BIMBOA returns using WALMEX returns (Cluste
 
 **Interpretation**: For every 1% move in WALMEX, BIMBOA moves approximately 0.27% on average, indicating BIMBOA is less sensitive to systematic market movements despite being more volatile individually.
 
+## CI/CD Pipeline
+
+This project uses **GitHub Actions** for continuous integration with the following features:
+
+### Automated Checks
+- **Code Formatting**: Black formatter verification
+- **Code Linting**: flake8 with Black-compatible settings
+- **Testing**: pytest with coverage reporting
+- **Multi-Python**: Testing on Python 3.11 and 3.12
+- **Docker Testing**: Containerized test execution
+- **Coverage Reporting**: Integration with Codecov
+
+### Quality Gates
+The CI pipeline ensures:
+- All tests pass with minimum 47% coverage
+- Code follows Black formatting standards
+- No linting errors (syntax, undefined names)
+- Docker containerization works correctly
+
+### Local Development Commands
+```bash
+# Format code
+make format
+
+# Check formatting (without making changes)
+make format-check
+
+# Run linting
+make lint
+
+# Run all quality checks (format-check + lint + test)
+make quality
+
+# Simulate CI pipeline locally
+make ci
 
 ## Technical Implementation
 
