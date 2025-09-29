@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
+import networkx as nx
 
 
 # Create visualizations directory if it doesn't exist
@@ -42,7 +43,11 @@ def get_stock_symbols():
     ]
 
 
-def download_stock_data(symbols, start_date="2020-01-01", end_date="2025-09-05"):
+def download_stock_data(
+    symbols,
+    start_date="2020-01-01",
+    end_date="2025-09-05"
+):
     """Download stock data for given symbols and date range."""
     if not symbols:
         raise ValueError("Symbols list cannot be empty")
@@ -112,7 +117,7 @@ def perform_kmeans_clustering(corr_matrix, n_clusters=4, random_state=42):
             cluster_groups[cluster] = []
         cluster_groups[cluster].append(stock)
 
-    return kmeans, cluster_groups
+    return cluster_groups
 
 
 def calculate_returns(df, stock1_col, stock2_col):
@@ -169,7 +174,12 @@ def create_correlation_heatmap(corr_matrix, save_path=None):
 
     plt.figure(figsize=(12, 10))
     sns.heatmap(
-        corr_matrix, mask=mask, annot=True, fmt=".2f", cmap="coolwarm", square=True
+        corr_matrix,
+        mask=mask,
+        annot=True,
+        fmt=".2f",
+        cmap="coolwarm",
+        square=True,
     )
     plt.xticks(
         rotation=90,
@@ -213,7 +223,10 @@ def create_returns_plot(df_returns, stock1_col, stock2_col, save_path=None):
         data=df_returns, x="Date", y=f"{stock1_col}_returns", label=f"{stock1_col}"
     )
     sns.lineplot(
-        data=df_returns, x="Date", y=f"{stock2_col}_returns", label=f"{stock2_col}"
+        data=df_returns,
+        x="Date",
+        y=f"{stock2_col}_returns",
+        label=f"{stock2_col}",
     )
     plt.title(f"Stock Returns Over Time: {stock1_col} vs {stock2_col}")
     plt.xlabel("Date")
@@ -236,6 +249,33 @@ def print_cluster_results(cluster_groups):
     for cluster_id in sorted(cluster_groups.keys()):
         for stock in sorted(cluster_groups[cluster_id]):
             print(f"  • {stock}")
+
+
+def simple_correlation_network(corr_matrix):
+    """Create basic network showing strongest correlations"""
+    G = nx.Graph()
+    # Add all stocks as nodes
+    for stock in corr_matrix.columns:
+        G.add_node(stock.replace('.MX', ''))  # Clean names
+    # Add edges for strong correlations (>0.6)
+    for i in range(len(corr_matrix)):
+        for j in range(i + 1, len(corr_matrix)):
+            corr_val = corr_matrix.item(i, j)
+            if corr_val > 0.6:  # Only strong correlations
+                stock1 = corr_matrix.columns[i].replace('.MX', '')
+                stock2 = corr_matrix.columns[j].replace('.MX', '')
+                G.add_edge(stock1, stock2, weight=corr_val)
+    # Simple visualization
+    plt.figure(figsize=(12, 8))
+    pos = nx.spring_layout(G, k=2, iterations=50)
+    # Draw network
+    nx.draw_networkx_nodes(G, pos, node_size=500, node_color='lightblue')
+    nx.draw_networkx_labels(G, pos, font_size=8)
+    nx.draw_networkx_edges(G, pos, width=2, alpha=0.6, edge_color='gray')
+    plt.title("Mexican Stocks Network (Correlation > 0.6)")
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
 
 
 def print_model_results(model_results, predictor_name, target_name):
@@ -263,13 +303,14 @@ def main():
 
     # Correlation analysis
     corr_matrix = calculate_correlation_matrix(df)
-    create_correlation_heatmap(corr_matrix, "visualizations/stock_correlation.png")
+    create_correlation_heatmap(
+        corr_matrix, "visualizations/stock_correlation.png")
 
     # Clustering
     k_range, inertias = find_optimal_clusters(corr_matrix)
     create_elbow_plot(k_range, inertias, "visualizations/elbow.png")
 
-    kmeans, cluster_groups = perform_kmeans_clustering(corr_matrix)
+    cluster_groups = perform_kmeans_clustering(corr_matrix)
     print_cluster_results(cluster_groups)
 
     # Time series modeling (Cluster 2: Consumer Staples)
@@ -277,6 +318,7 @@ def main():
     create_returns_plot(
         df_returns, "WALMEX.MX", "BIMBOA.MX", "visualizations/stock_returns.png"
     )
+    simple_correlation_network(corr_matrix)
 
     model_results = build_linear_model(
         df_returns, "WALMEX.MX_returns", "BIMBOA.MX_returns"

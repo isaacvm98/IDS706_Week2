@@ -10,3 +10,4 @@ pytest
 pytest-cov
 pyarrow
 flake8
+networkx

@@ -101,7 +101,7 @@ This project includes a robust testing framework to ensure code reliability:
 - **Current Coverage**: 47% (64/136 statements tested)
 - **Test Categories**: Data processing, correlation analysis, clustering, time series modeling
 - **Framework**: pytest with coverage reporting
-
+```
 #### Test Structure
 ```
 test_stock_analysis.py
@@ -166,6 +166,9 @@ Displays daily returns for Cluster 2 stocks over time:
 ![Returns Over Time - Cluster 2](visualizations/stock_returns.png)
 
 *Daily returns comparison between BIMBOA.MX (Grupo Bimbo) and WALMEX.MX (Walmart México)*
+
+### 4. Correlation Network
+![Correlation Network for stocks](image-2.png)
 
 ## Business Insights
 
