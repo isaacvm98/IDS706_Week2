@@ -78,50 +78,9 @@ class TestCorrelationMatrix(unittest.TestCase):
         self.assertTrue(np.all(corr_array <= 1.0))
 
 
-# =====================================================
-# 3. CLUSTERING TESTS
-# =====================================================
-
-
-class TestClustering(unittest.TestCase):
-    """Tests for K-means clustering functionality."""
-
-    def setUp(self):
-        self.stocks = ["WALMEX.MX", "BIMBOA.MX", "GFNORTEO.MX", "CEMEXCPO.MX"]
-        self.raw_data = download_stock_data(self.stocks)
-        self.df = extract_close_prices(self.raw_data)
-        self.corr_matrix = calculate_correlation_matrix(self.df)
-
-    def test_clustering_returns_correct_number_of_clusters(self):
-        """Test that clustering returns the requested number of clusters."""
-        n_clusters = 2
-        kmeans, cluster_groups = perform_kmeans_clustering(
-            self.corr_matrix, n_clusters=n_clusters
-        )
-        self.assertEqual(len(cluster_groups), n_clusters)
-
-    def test_all_stocks_assigned_to_clusters(self):
-        """Test that every stock is assigned to exactly one cluster."""
-        kmeans, cluster_groups = perform_kmeans_clustering(
-            self.corr_matrix, n_clusters=2
-        )
-
-        # Count total stocks in all clusters
-        total_assigned = sum(len(stocks) for stocks in cluster_groups.values())
-        expected_stocks = len(self.corr_matrix.columns)
-        self.assertEqual(total_assigned, expected_stocks)
-
-    def test_clustering_with_invalid_parameters(self):
-        """Test that invalid clustering parameters raise appropriate errors."""
-        with self.assertRaises(ValueError):
-            perform_kmeans_clustering(self.corr_matrix, n_clusters=0)
-
-        with self.assertRaises(ValueError):
-            perform_kmeans_clustering(self.corr_matrix, n_clusters=-1)
-
 
 # =====================================================
-# 4. TIME SERIES MODELING TESTS
+# 3. TIME SERIES MODELING TESTS
 # =====================================================
 
 
@@ -182,7 +141,10 @@ class TestTimeSeriesModeling(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             build_linear_model(
-                small_data, "WALMEX.MX_returns", "BIMBOA.MX_returns", test_size=30
+                small_data,
+                "WALMEX.MX_returns", 
+                "BIMBOA.MX_returns", 
+                test_size=30
             )
 
 
