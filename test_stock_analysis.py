@@ -6,7 +6,6 @@ from basic_data_analysis import (
     extract_close_prices,
     download_stock_data,
     calculate_correlation_matrix,
-    perform_kmeans_clustering,
     calculate_returns,
     build_linear_model,
 )
