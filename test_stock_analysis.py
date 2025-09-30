@@ -78,7 +78,6 @@ class TestCorrelationMatrix(unittest.TestCase):
         self.assertTrue(np.all(corr_array <= 1.0))
 
 
-
 # =====================================================
 # 3. TIME SERIES MODELING TESTS
 # =====================================================
@@ -141,10 +140,7 @@ class TestTimeSeriesModeling(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             build_linear_model(
-                small_data,
-                "WALMEX.MX_returns", 
-                "BIMBOA.MX_returns", 
-                test_size=30
+                small_data, "WALMEX.MX_returns", "BIMBOA.MX_returns", test_size=30
             )
 
 
