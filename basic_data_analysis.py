@@ -43,11 +43,7 @@ def get_stock_symbols():
     ]
 
 
-def download_stock_data(
-    symbols,
-    start_date="2020-01-01",
-    end_date="2025-09-05"
-):
+def download_stock_data(symbols, start_date="2020-01-01", end_date="2025-09-05"):
     """Download stock data for given symbols and date range."""
     if not symbols:
         raise ValueError("Symbols list cannot be empty")
@@ -83,6 +79,27 @@ def calculate_correlation_matrix(df):
     # Remove Date column for correlation calculation
     price_columns = [col for col in df.columns if col != "Date"]
     corr_matrix = df.select(price_columns).corr()
+
+    return corr_matrix
+
+
+def calculate_returns_correlation_matrix(df):
+    """Calculate correlation matrix from returns, not prices."""
+    # Calculate returns for all stocks
+    price_columns = [col for col in df.columns if col != "Date"]
+    returns_df = df.select([
+        pl.col("Date"),
+        *[pl.col(col).pct_change().alias(f"{col}_returns")
+          for col in price_columns]
+    ]).drop_nulls()
+
+    # Get correlation of returns
+    return_columns = [col for col in returns_df.columns if col != "Date"]
+    corr_matrix = returns_df.select(return_columns).corr()
+
+    # Clean up column names (remove '_returns' suffix)
+    corr_matrix.columns = [col.replace("_returns", "")
+                           for col in corr_matrix.columns]
 
     return corr_matrix
 
@@ -220,7 +237,10 @@ def create_returns_plot(df_returns, stock1_col, stock2_col, save_path=None):
     """Create and optionally save returns time series plot."""
     plt.figure(figsize=(12, 6))
     sns.lineplot(
-        data=df_returns, x="Date", y=f"{stock1_col}_returns", label=f"{stock1_col}"
+        data=df_returns,
+        x="Date",
+        y=f"{stock1_col}_returns",
+        label=f"{stock1_col}"
     )
     sns.lineplot(
         data=df_returns,
@@ -251,31 +271,32 @@ def print_cluster_results(cluster_groups):
             print(f"  • {stock}")
 
 
-def simple_correlation_network(corr_matrix):
+def simple_correlation_network(corr_matrix, save_path):
     """Create basic network showing strongest correlations"""
     G = nx.Graph()
     # Add all stocks as nodes
     for stock in corr_matrix.columns:
-        G.add_node(stock.replace('.MX', ''))  # Clean names
+        G.add_node(stock.replace(".MX", ""))  # Clean names
     # Add edges for strong correlations (>0.6)
     for i in range(len(corr_matrix)):
         for j in range(i + 1, len(corr_matrix)):
             corr_val = corr_matrix.item(i, j)
             if corr_val > 0.6:  # Only strong correlations
-                stock1 = corr_matrix.columns[i].replace('.MX', '')
-                stock2 = corr_matrix.columns[j].replace('.MX', '')
+                stock1 = corr_matrix.columns[i].replace(".MX", "")
+                stock2 = corr_matrix.columns[j].replace(".MX", "")
                 G.add_edge(stock1, stock2, weight=corr_val)
     # Simple visualization
     plt.figure(figsize=(12, 8))
     pos = nx.spring_layout(G, k=2, iterations=50)
     # Draw network
-    nx.draw_networkx_nodes(G, pos, node_size=500, node_color='lightblue')
+    nx.draw_networkx_nodes(G, pos, node_size=500, node_color="lightblue")
     nx.draw_networkx_labels(G, pos, font_size=8)
-    nx.draw_networkx_edges(G, pos, width=2, alpha=0.6, edge_color='gray')
+    nx.draw_networkx_edges(G, pos, width=2, alpha=0.6, edge_color="gray")
     plt.title("Mexican Stocks Network (Correlation > 0.6)")
-    plt.axis('off')
+    plt.axis("off")
     plt.tight_layout()
-    plt.show()
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
 
 
 def print_model_results(model_results, predictor_name, target_name):
@@ -301,29 +322,38 @@ def main():
     print(f"Columns: {df.columns}")
     print(f"Shape: {df.shape}")
 
-    # Correlation analysis
     corr_matrix = calculate_correlation_matrix(df)
     create_correlation_heatmap(
         corr_matrix, "visualizations/stock_correlation.png")
-
-    # Clustering
-    k_range, inertias = find_optimal_clusters(corr_matrix)
-    create_elbow_plot(k_range, inertias, "visualizations/elbow.png")
-
-    cluster_groups = perform_kmeans_clustering(corr_matrix)
-    print_cluster_results(cluster_groups)
-
+    simple_correlation_network(corr_matrix,
+                               "visualizations/correlation_network.png")
+    # Correlation analysis
+    corr_matrix_returns = calculate_returns_correlation_matrix(df)
+    create_correlation_heatmap(
+        corr_matrix_returns, "visualizations/returns_stock_correlation.png")
+    simple_correlation_network(corr_matrix_returns,
+                               "visualizations/returns_correlation_network.png")
+    df_returns = calculate_returns(df, "GAPB.MX", "OMAB.MX")
     # Time series modeling (Cluster 2: Consumer Staples)
-    df_returns = calculate_returns(df, "WALMEX.MX", "BIMBOA.MX")
     create_returns_plot(
-        df_returns, "WALMEX.MX", "BIMBOA.MX", "visualizations/stock_returns.png"
-    )
-    simple_correlation_network(corr_matrix)
+        df_returns,
+        "GAPB.MX",
+        "OMAB.MX",
+        "visualizations/stock_returns.png")
+    # Compare prediction power
+    high_corr_model = build_linear_model(df_returns,
+                                         "GAPB.MX_returns",
+                                         "OMAB.MX_returns")
+    print_model_results(high_corr_model, "GAPB.MX", "OMAB.MX")
+    df_returns_2 = calculate_returns(df, "GAPB.MX", "CEMEXCPO.MX")
+    low_corr_model = build_linear_model(df_returns_2,
+                                        "GAPB.MX_returns",
+                                        "CEMEXCPO.MX_returns")
+    print_model_results(low_corr_model, "GAPB.MX", "CEMEXCPO")
 
-    model_results = build_linear_model(
-        df_returns, "WALMEX.MX_returns", "BIMBOA.MX_returns"
-    )
-    print_model_results(model_results, "WALMEX", "BIMBOA")
+    print(f"High correlation R²: {high_corr_model['r2']:.3f}")
+    print(f"Low correlation R²: {low_corr_model['r2']:.3f}")
+    print("\nLower R² in low-corr pairs = potential alpha opportunity!")
 
 
 if __name__ == "__main__":

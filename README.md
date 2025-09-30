@@ -1,6 +1,6 @@
-# Mexican Stock Market Analysis: Correlation Clustering and Time Series Modeling
+# Mexican Stock Market Analysis: Returns Correlation and Predictive Modeling
 
-A data science project analyzing correlation patterns among 20 major Mexican stocks using K-means clustering and linear regression forecasting.
+A data science project analyzing daily returns correlation patterns among 20 major Mexican stocks using network analysis and linear regression validation.
 
 [![CI](https://github.com/isaacvm98/IDS706_Week2/workflows/CI/badge.svg)](https://github.com/isaacvm98/IDS706_Week2/actions)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -8,9 +8,10 @@ A data science project analyzing correlation patterns among 20 major Mexican sto
 ## Project Overview
 
 This project demonstrates fundamental data science techniques applied to financial market data, including:
-- Exploratory data analysis of Mexican stock prices (2020-2025)
-- Correlation-based clustering to identify stock groups with similar movement patterns
-- Time series modeling to predict stock returns using linear regression
+- Exploratory data analysis of Mexican stock daily returns (2020-2025)
+- Returns correlation network analysis to identify predictable relationships
+- Linear regression validation of correlation-based predictions
+- Distinction between price trends and returns dynamics
 
 ## Dataset
 
@@ -27,39 +28,61 @@ This project demonstrates fundamental data science techniques applied to financi
 
 ## Key Findings
 
-### 1. Correlation Clustering Results
-Using K-means clustering (k=4) on the correlation matrix revealed four distinct groups:
+### 1. Returns Correlation Network
+Unlike price correlation (which shows long-term trends), **daily returns correlation** reveals predictable short-term relationships:
 
-| Cluster | Stock Count | Description | Stocks |
-|---------|-------------|-------------|--------|
-| 0 | 13 | Main Market Group | AC.MX, ASURB.MX, FEMSAUBD.MX, FIBRAMQ12.MX, GAPB.MX, GCARSOA1.MX, GFINBURO.MX, GFNORTEO.MX, GMEXICOB.MX, GRUMAB.MX, KOFUBL.MX, LIVEPOL1.MX, OMAB.MX |
-| 1 | 2 | Industrial/Media Pair | ALPEKA.MX, TLEVISACPO.MX |
-| 2 | 2 | Consumer Staples | BIMBOA.MX, WALMEX.MX |
-| 3 | 3 | Materials/Healthcare Mix | CEMEXCPO.MX, LABB.MX, PE&OLES.MX |
+![Correlation Network](image-2.png)
 
-### 2. Time Series Modeling
-Applied linear regression to predict BIMBOA returns using WALMEX returns (Cluster 2):
+**Network Characteristics (correlation > 0.6):**
+- **Sparse structure**: Most stocks show independent daily movements
+- **Airport cluster**: GAPB ↔ OMAB ↔ ASURB (same industry, shared factors)
+- **Ownership effect**: GAPB ↔ GCARSOA1 (Carlos Slim companies)
+- **Isolated nodes**: Most stocks have low returns correlation, indicating diversification opportunities
 
-**Results**:
-- **R² = 0.16** (16% variance explained)
-- **Beta coefficient = 0.270**
-- **MSE ≈ 0.00** (very low for daily returns)
-- **Equation**: BIMBOA = 0.270 × WALMEX + 0.001
+### 2. Predictive Power Validation
+Linear regression confirms the network structure - high correlation pairs are predictable:
 
-**Interpretation**: For every 1% move in WALMEX, BIMBOA moves approximately 0.27% on average, indicating BIMBOA is less sensitive to systematic market movements despite being more volatile individually.
+#### High Correlation Pair (Airport Operators)
+**Predicting OMAB.MX using GAPB.MX:**
+- **R² = 0.374** (37.4% variance explained) ✅
+- **Beta coefficient = 0.695**
+- **Correlation > 0.6** (visible in network)
+- **Equation**: OMAB = 0.695 × GAPB + 0.000
+
+#### Low Correlation Pair (Different Sectors)
+**Predicting CEMEXCPO using GAPB.MX:**
+- **R² = 0.024** (only 2.4% variance explained) ❌
+- **Beta coefficient = 0.379**
+- **No connection** in network graph
+- **Equation**: CEMEXCPO = 0.379 × GAPB + 0.001
+
+### 3. Key Insight: Correlation ≠ Price Trends
+
+**Critical Finding**: Mexican stocks show **high long-term price correlation** ![**high long-term price correlation**](visualizations/correlation_network.png)
+but **low daily returns correlation** ![**low daily returns correlation**](visualizations/returns_correlation_network.png)
+
+| Metric | Price Correlation | Returns Correlation |
+|--------|------------------|---------------------|
+| **What it measures** | Long-term trends | Daily movements |
+| **Network density** | Dense (stocks trend together) | Sparse (independent moves) |
+| **Interpretation** | Stocks grow together over years | Daily news is idiosyncratic |
+| **For trading** | Hard to find diversification | Excellent diversification |
+| **For prediction** | Misleading for short-term | Accurate for predictability |
+
+**Implication**: Diversification benefits come from **timing differences** rather than fundamental independence.
 
 ## CI/CD Pipeline
-![Successful workflow run in a GitHub Actions environment.](image.png)
-![Refactor name using F2](image-1.png)
+
+![Successful workflow run](image.png)
+
 This project uses **GitHub Actions** for continuous integration with the following features:
 
 ### Automated Checks
 - **Code Formatting**: Black formatter verification
-- **Code Linting**: flake8 with Black-compatible settings
+- **Code Linting**: flake8 with relaxed line length rules
 - **Testing**: pytest with coverage reporting
 - **Multi-Python**: Testing on Python 3.11 and 3.12
 - **Docker Testing**: Containerized test execution
-- **Coverage Reporting**: Integration with Codecov
 
 ### Quality Gates
 The CI pipeline ensures:
@@ -84,14 +107,16 @@ make quality
 
 # Simulate CI pipeline locally
 make ci
+```
 
 ## Technical Implementation
 
 ### Key Methods
 1. **Data Collection**: Yahoo Finance API for historical stock prices
-2. **Clustering**: K-means on correlation matrix with elbow method for optimal k
-3. **Modeling**: Linear regression on daily returns (not prices) for stationarity
-4. **Validation**: Train/test split with last 30 days as test set
+2. **Returns Calculation**: Daily percentage change for stationarity
+3. **Correlation Analysis**: Returns correlation matrix
+4. **Network Visualization**: Graph analysis with correlation threshold
+5. **Model Validation**: Linear regression confirms network structure
 
 ### Testing Infrastructure
 
@@ -99,9 +124,9 @@ This project includes a robust testing framework to ensure code reliability:
 
 #### Test Coverage
 - **Current Coverage**: 47% (64/136 statements tested)
-- **Test Categories**: Data processing, correlation analysis, clustering, time series modeling
+- **Test Categories**: Data processing, correlation analysis, time series modeling
 - **Framework**: pytest with coverage reporting
-```
+
 #### Test Structure
 ```
 test_stock_analysis.py
@@ -129,79 +154,67 @@ pytest --cov=basic_data_analysis --cov-report=html test_stock_analysis.py
 ### 1. Data Preprocessing
 - Downloaded OHLCV data for 20 Mexican stocks using `yfinance`
 - Extracted close prices using Polars for efficient data manipulation
-- Calculated daily returns using percentage change for time series modeling
+- **Calculated daily returns** using percentage change (key for stationarity)
 
-### 2. Correlation Analysis
-- Computed correlation matrix for all stock pairs
-- Visualized using masked heatmap to show upper triangular relationships
-- Applied K-means clustering to group stocks by correlation patterns
+### 2. Returns Correlation Analysis
+- Computed **returns correlation matrix** (not price correlation)
+- Created network visualization with correlation threshold > 0.6
+- Identified strongly connected components (airport operators)
 
-### 3. Optimal Clustering
-- Used elbow method to determine optimal number of clusters (k=4)
-- Analyzed inertia reduction across k=2 to k=7
-- Clear elbow at k=4 indicated optimal balance of complexity vs. explanatory power
-
-### 4. Time Series Forecasting
-- Selected Cluster 2 (consumer staples) for detailed analysis
-- Built linear regression model predicting BIMBOA returns from WALMEX returns
-- Achieved reasonable performance for daily stock return prediction (R² = 0.16)
+### 3. Predictive Model Validation
+- Selected pairs with high and low returns correlation
+- Built linear regression models for both cases
+- Confirmed: High correlation → High R² (predictable)
+- Confirmed: Low correlation → Low R² (independent)
 
 ## Visualizations
 
-The project generates three key visualizations:
+The project generates key visualizations:
 
 ### 1. Correlation Heatmap
-Shows correlation coefficients between all stock pairs:
+Shows correlation coefficients between all stock returns:
 
-![Correlation Heatmap](visualizations/stock_correlation.png)
+![Correlation Heatmap](visualizations/returns_stock_correlation.png)
 
-### 2. Elbow Plot  
-Demonstrates optimal cluster selection (k=4):
+### 2. Correlation Network
+Sparse network showing only strong relationships (>0.6):
 
-![Elbow Plot](visualizations/elbow.png)
+![Correlation Network](visualizations/returns_correlation_network.png)
+
+*Key finding: Most Mexican stocks have independent daily movements*
 
 ### 3. Time Series Plot
-Displays daily returns for Cluster 2 stocks over time:
+Displays daily returns for selected pairs:
 
-![Returns Over Time - Cluster 2](visualizations/stock_returns.png)
-
-*Daily returns comparison between BIMBOA.MX (Grupo Bimbo) and WALMEX.MX (Walmart México)*
-
-### 4. Correlation Network
-![Correlation Network for stocks](image-2.png)
+![Returns Over Time](visualizations/stock_returns.png)
 
 ## Business Insights
 
-### Clustering Insights
-- **Market Integration**: Most Mexican stocks (65%) cluster together, suggesting strong market-wide factors drive returns
-- **Sector Logic**: Consumer staples (BIMBOA + WALMEX) form distinct cluster, confirming economic intuition
-- **Ownership Effects**: Carlos Slim companies (GFINBURO + GCARSOA1) cluster with main market rather than forming separate group
-- **Cross-Sector Patterns**: Clustering reveals relationships beyond traditional sector boundaries
+### Network Analysis Insights
+- **Industry Clusters**: Airport operators show strong correlation (>0.6) due to shared regulatory/economic factors
+- **Diversification Opportunity**: Low average correlation indicates strong diversification benefits
 
-### Financial Modeling Insights
-- **R² of 0.16** is reasonable for daily stock returns (individual stocks are inherently noisy)
-- **Beta of 0.270** suggests BIMBOA is more defensive than WALMEX despite higher volatility
-- **Model validation** confirms correlation patterns discovered through clustering
-- **Volatility decomposition** shows BIMBOA has higher idiosyncratic risk but lower systematic sensitivity
-
-## Visualizations
-
-The project generates three key visualizations:
-1. **Correlation Heatmap**: Shows correlation coefficients between all stock pairs
-2. **Elbow Plot**: Demonstrates optimal cluster selection (k=4)
-3. **Time Series Plot**: Displays daily returns for Cluster 2 stocks over time
+### Predictive Modeling Insights
+- **R² = 0.374 for airports**: Strong industry relationships enable prediction
+- **R² = 0.024 across sectors**: Cross-sector predictions fail (good for diversification)
+- **Alpha Opportunities**: Low correlation pairs offer market-neutral strategies
 
 ## Project Structure
 ```
 mexican-stock-analysis/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # GitHub Actions CI pipeline
 ├── .devcontainer/
-│   └── devcontainer.json      # Dev container configuration
-├── basic_data_analysis.py     # Main analysis script
-├── requirements.txt           # Python dependencies
-├── Makefile                   # Build automation
-├── README.md                  # This file
-├── .gitignore                 # Git ignore patterns
-├── test_nb.ipynb              # Jupyter notebook with exploration and visualizations
+│   └── devcontainer.json          # Dev container configuration
+├── basic_data_analysis.py         # Main analysis script
+├── test_stock_analysis.py         # Comprehensive test suite
+├── requirements.txt               # Python dependencies
+├── Makefile                       # Build automation
+├── dockerfile                     # Docker container definition
+├── docker-compose.yml             # Multi-service Docker setup
+├── README.md                      # This file
+└── test_nb.ipynb                  # Jupyter notebook with exploration
 ```
 
 ## Development Environment
@@ -214,26 +227,21 @@ This project uses **VS Code Dev Containers** for consistent development environm
 
 ### Setup Options
 
-#### Option 1: VS Code Dev Container (Recommended for Development)
+#### Option 1: VS Code Dev Container (Recommended)
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/isaacvm98/IDS706_Week2
 cd mexican-stock-analysis
 
 # Open in VS Code
 code .
 
-# When prompted, "Reopen in Container" or use Command Palette:
-# "Dev Containers: Reopen in Container"
+# When prompted, "Reopen in Container"
 ```
 
 #### Option 2: Direct Docker
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd mexican-stock-analysis
-
-# Build and run with Docker
+# Build and run
 make docker-build
 make docker-run
 
@@ -249,10 +257,6 @@ docker-compose up mexican-stock-analysis
 
 # Start Jupyter Lab (accessible at http://localhost:8888)
 docker-compose up jupyter
-
-# Development mode (interactive shell)
-docker-compose up -d dev
-docker-compose exec dev bash
 ```
 
 ### Running the Analysis
@@ -262,53 +266,65 @@ make install
 
 # Run the complete analysis
 make run
-# or
-python basic_data_analysis.py
 
 # Start Jupyter Lab
 make notebook
 
-# Optional: Format and lint code
+# Quality checks
 make format
 make lint
+make test
 ```
 
 ## Model Performance Context
 
 For daily stock return prediction:
-- **R² > 0.3**: Excellent performance
-- **R² = 0.1-0.3**: Good performance (our result: 0.16)
-- **R² < 0.1**: Weak but potentially meaningful
+- **R² > 0.3**: Excellent performance (our airport pair: 0.374) ✅
+- **R² = 0.1-0.3**: Good performance
+- **R² < 0.1**: Weak relationship (our cross-sector: 0.024)
 - **R² < 0**: Worse than random prediction
-
-Our model's performance sits in the "good" range for this prediction task.
 
 ## Economic Interpretation
 
-**BIMBOA (Food Manufacturing) vs WALMEX (Retail)**:
-- Despite BIMBOA being 25.6% more volatile than WALMEX, it only captures 27% of WALMEX's systematic moves
-- This suggests different sensitivities to macroeconomic factors despite both being consumer-focused
-- Food manufacturing may be more defensive during economic uncertainty
-- Retail operations may be more sensitive to consumer spending fluctuations
+### Airport Operators (High Correlation)
+**OMAB vs GAPB (R² = 0.374)**:
+- Same regulatory environment (Mexican aviation authority)
+- Shared economic factors (tourism, business travel)
+- Similar operational risks (fuel costs, maintenance)
+- Beta = 0.695 suggests OMAB is slightly less volatile than GAPB
+
+### Cross-Sector Comparison (Low Correlation)
+**CEMEXCPO vs GAPB (R² = 0.024)**:
+- Different industries (construction vs infrastructure)
+- Independent demand drivers
+- Uncorrelated daily news flow
+- Excellent candidates for diversified portfolio
 
 ## Limitations and Future Work
 
 ### Current Limitations
 - Simple linear model may miss non-linear relationships
-- Daily frequency may contain too much noise
-- Limited to correlation-based clustering only
+- Daily frequency contains significant noise
+- Limited to correlation-based analysis
+- No regime detection for market stress periods
 
 ### Future Improvements
 - Implement ARIMA/GARCH models for better time series forecasting
 - Add regime detection for adaptive modeling during market stress
-- Include volume and volatility patterns in clustering
+- Include volume and volatility patterns in network analysis
 - Extend analysis to include fundamental data
 - Create real-time monitoring dashboard
+- Test pairs trading strategies on identified low-correlation pairs
 
 ## Conclusion
 
-This project demonstrates that machine learning can identify meaningful patterns in financial data that align with economic intuition. The correlation-based clustering revealed sector relationships while the time series modeling quantified these relationships for predictive purposes.
+This project demonstrates a critical insight in financial data analysis: **correlation type matters**. While Mexican stocks show high price correlation (trending together over time), their **returns correlation is sparse**, revealing:
 
-**Key Learning**: Correlation patterns don't always follow traditional sector boundaries. K-means discovered ownership structures (Carlos Slim companies) and business cycle relationships that pure sector analysis might miss, highlighting the value of data-driven approaches in financial analysis.
+1. **Independent daily movements** enable diversification
+2. **Network analysis** identifies predictable relationships (airports, ownership)
+3. **Linear models validate** the network structure (high corr → high R²)
+4. **Data engineering approach** uncovers trading opportunities invisible in traditional analysis
 
-**Academic Value**: Successfully applied fundamental data science techniques (clustering, regression, model validation) to real-world financial data with interpretable and economically sensible results.
+**Key Learning**: Price correlation measures long-term trends; returns correlation measures predictability. Understanding this distinction is fundamental for portfolio construction and risk management.
+
+**Academic Value**: Successfully demonstrated the importance of choosing appropriate correlation measures, validated network structure with predictive models, and provided interpretable, economically sensible results backed by a robust CI/CD pipeline.
