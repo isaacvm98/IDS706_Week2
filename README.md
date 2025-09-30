@@ -31,7 +31,7 @@ This project demonstrates fundamental data science techniques applied to financi
 ### 1. Returns Correlation Network
 Unlike price correlation (which shows long-term trends), **daily returns correlation** reveals predictable short-term relationships:
 
-![Correlation Network](image-2.png)
+![Correlation Network](visualizations/returns_correlation_network.png)
 
 **Network Characteristics (correlation > 0.6):**
 - **Sparse structure**: Most stocks show independent daily movements

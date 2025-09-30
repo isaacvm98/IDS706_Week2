@@ -87,19 +87,22 @@ def calculate_returns_correlation_matrix(df):
     """Calculate correlation matrix from returns, not prices."""
     # Calculate returns for all stocks
     price_columns = [col for col in df.columns if col != "Date"]
-    returns_df = df.select([
-        pl.col("Date"),
-        *[pl.col(col).pct_change().alias(f"{col}_returns")
-          for col in price_columns]
-    ]).drop_nulls()
+    returns_df = df.select(
+        [
+            pl.col("Date"),
+            *[
+                pl.col(col).pct_change().alias(f"{col}_returns")
+                for col in price_columns
+            ],
+        ]
+    ).drop_nulls()
 
     # Get correlation of returns
     return_columns = [col for col in returns_df.columns if col != "Date"]
     corr_matrix = returns_df.select(return_columns).corr()
 
     # Clean up column names (remove '_returns' suffix)
-    corr_matrix.columns = [col.replace("_returns", "")
-                           for col in corr_matrix.columns]
+    corr_matrix.columns = [col.replace("_returns", "") for col in corr_matrix.columns]
 
     return corr_matrix
 
@@ -237,10 +240,7 @@ def create_returns_plot(df_returns, stock1_col, stock2_col, save_path=None):
     """Create and optionally save returns time series plot."""
     plt.figure(figsize=(12, 6))
     sns.lineplot(
-        data=df_returns,
-        x="Date",
-        y=f"{stock1_col}_returns",
-        label=f"{stock1_col}"
+        data=df_returns, x="Date", y=f"{stock1_col}_returns", label=f"{stock1_col}"
     )
     sns.lineplot(
         data=df_returns,
@@ -323,32 +323,30 @@ def main():
     print(f"Shape: {df.shape}")
 
     corr_matrix = calculate_correlation_matrix(df)
-    create_correlation_heatmap(
-        corr_matrix, "visualizations/stock_correlation.png")
-    simple_correlation_network(corr_matrix,
-                               "visualizations/correlation_network.png")
+    create_correlation_heatmap(corr_matrix, "visualizations/stock_correlation.png")
+    simple_correlation_network(corr_matrix, "visualizations/correlation_network.png")
     # Correlation analysis
     corr_matrix_returns = calculate_returns_correlation_matrix(df)
     create_correlation_heatmap(
-        corr_matrix_returns, "visualizations/returns_stock_correlation.png")
-    simple_correlation_network(corr_matrix_returns,
-                               "visualizations/returns_correlation_network.png")
+        corr_matrix_returns, "visualizations/returns_stock_correlation.png"
+    )
+    simple_correlation_network(
+        corr_matrix_returns, "visualizations/returns_correlation_network.png"
+    )
     df_returns = calculate_returns(df, "GAPB.MX", "OMAB.MX")
     # Time series modeling (Cluster 2: Consumer Staples)
     create_returns_plot(
-        df_returns,
-        "GAPB.MX",
-        "OMAB.MX",
-        "visualizations/stock_returns.png")
+        df_returns, "GAPB.MX", "OMAB.MX", "visualizations/stock_returns.png"
+    )
     # Compare prediction power
-    high_corr_model = build_linear_model(df_returns,
-                                         "GAPB.MX_returns",
-                                         "OMAB.MX_returns")
+    high_corr_model = build_linear_model(
+        df_returns, "GAPB.MX_returns", "OMAB.MX_returns"
+    )
     print_model_results(high_corr_model, "GAPB.MX", "OMAB.MX")
     df_returns_2 = calculate_returns(df, "GAPB.MX", "CEMEXCPO.MX")
-    low_corr_model = build_linear_model(df_returns_2,
-                                        "GAPB.MX_returns",
-                                        "CEMEXCPO.MX_returns")
+    low_corr_model = build_linear_model(
+        df_returns_2, "GAPB.MX_returns", "CEMEXCPO.MX_returns"
+    )
     print_model_results(low_corr_model, "GAPB.MX", "CEMEXCPO")
 
     print(f"High correlation R²: {high_corr_model['r2']:.3f}")
